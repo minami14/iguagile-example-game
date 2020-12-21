@@ -1,0 +1,47 @@
+version: '3'
+
+services:
+  redis:
+    image: library/redis:latest
+    expose:
+      - 6379
+    restart: always
+
+  nginx:
+    build:
+      context: nginx
+    volumes:
+      - ./nginx/logs:/root/logs
+      - ./public:/public
+      # - /etc/letsencrypt/live/example.com/cert.pem:/ssl/cert.pem
+      # - /etc/letsencrypt/live/example.com/privkey.pem:/ssl/privkey.pem
+    ports:
+      - 8080:80
+      # - 443:443
+    restart: always
+
+  iguagile-proxy:
+    image: minami14/iguagile-ws-proxy:latest
+    expose:
+      - 80
+    restart: always
+
+  iguagile-api:
+    image: iguagile/iguagile-api:latest
+    expose:
+      - 80
+    environment:
+      REDIS_HOST: redis:6379
+    restart: always
+
+  iguagile-engine:
+    build:
+      context: iguagile
+    expose:
+      - 4000
+      - 5000
+    environment:
+      ROOM_HOST: iguagile-engine:5000
+      REDIS_HOST: redis:6379
+      GRPC_PORT: 4000
+    restart: always
